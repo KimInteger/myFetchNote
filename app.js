@@ -23,19 +23,28 @@ const server = http.createServer((req, res) => {
     });
     req.on('end', () => {
       console.log('Received data:', body);
-      // app2.js 서버로 데이터 전송
-      axios
-        .post('http://localhost:8000/save', { data: body })
-        .then((response) => {
-          console.log('Data sent to app2.js and processed');
-          res.writeHead(200, { 'Content-Type': 'text/plain' });
-          res.end('Data received and processed');
-        })
-        .catch((error) => {
-          console.error('Error sending data to app2.js:', error);
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('Internal Server Error');
-        });
+      // dbServer로 데이터 전송
+      fetch('http://localhost:8000/save',{
+        method : 'POST',
+        headers : {'Content-Type' : 'application/json'},
+        body : JSON.stringify({data : body}),
+      })
+      .then((res)=>{
+        if(!res.ok){
+          throw new Error('response error!');
+        }
+        return res.json();
+      })
+      .then((data)=>{
+        console.log('perfect! fetch!', data);
+        res.writeHead(200,{"Content-Type":"application/json"});
+        res.end(data);
+      })
+      .catch((err)=>{
+        console.error('this is error', err);
+        res.writeHead(500,{'Content-Type':'text/plain'});
+        res.end('server error')
+      })
     });
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
