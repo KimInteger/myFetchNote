@@ -1,16 +1,13 @@
 import http from 'http'
 import sqlite3 from 'sqlite3'
-import parse from 'querystring'
 
 const PORT = 8000;
 const db = new sqlite3.Database('./test.db');
 
-// 데이터베이스 초기화 및 테이블 생성
 db.serialize(() => {
   db.run('CREATE TABLE IF NOT EXISTS user (name TEXT)');
 });
 
-// 서버 생성
 const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/save') {
     let body = '';
@@ -21,7 +18,6 @@ const server = http.createServer((req, res) => {
       const postData = JSON.parse(body);
       const userName = postData.data;
 
-      // 데이터 삽입
       db.serialize(() => {
         const stmt = db.prepare('INSERT INTO user (name) VALUES (?)');
         stmt.run(userName, (err) => {
@@ -44,7 +40,6 @@ const server = http.createServer((req, res) => {
   }
 });
 
-// 서버 실행
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}/`);
 });
