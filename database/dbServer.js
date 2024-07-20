@@ -1,5 +1,6 @@
-import http from 'http'
-import sqlite3 from 'sqlite3'
+const sqlite3 = require('sqlite3');
+const http = require('http');
+const qs = require('querystring');
 
 const PORT = 8000;
 const db = new sqlite3.Database('./test.db');
@@ -15,7 +16,7 @@ const server = http.createServer((req, res) => {
       body += chunk.toString();
     });
     req.on('end', () => {
-      const postData = JSON.parse(body);
+      const postData = qs.parse(body);
       const userName = postData.data;
 
       db.serialize(() => {
@@ -28,7 +29,7 @@ const server = http.createServer((req, res) => {
             return;
           }
           console.log('Data inserted successfully');
-          res.writeHead(200, { 'Content-Type': 'application:json' });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end({"response":"success"});
         });
         stmt.finalize();
