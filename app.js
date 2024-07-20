@@ -6,9 +6,11 @@ const qs = require('querystring')
 
 const PORT = 3000;
 
-const xhr = require('xhr2');
+const xhr2 = require('xhr2');
 
 const server = http.createServer((req, res) => {
+  console.log(req.method);
+  console.log(req.url);
   if (req.method === 'GET' && req.url === '/') {
     fs.readFile('./index.html', (err, data) => {
       if (err) {
@@ -25,54 +27,30 @@ const server = http.createServer((req, res) => {
       body += chunk.toString();
     });
     req.on('end', () => {
-      console.log('Received data:', body);
-
-      let parsedData;
+      let parseData;
       try {
-        parsedData = qs.parse(body);
-        console.log(parsedData);
-        console.log(JSON.stringify(parsedData));
+        parseData = qs.parse(body);
       } catch (err) {
-        console.error('Invalid JSON received:', err);
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.writeHead(400,{"Content-Type":"text/plain"});
         res.end('Bad Request');
         return;
       }
+      const xhr = new xhr2.XMLHttpRequest();
+      xhr.open('http://localhost:8000/test','POST')
+      xhr.setRequestHeader('Content-Type','application/json');
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('http://localhost:8000/save','POST',true);
-      xhr.status(200);
-      xhr.setRequestHeader({"Content-Type":"application/json"});
-      xhr.send(JSON.stringify(parsedData));
-
-      xhr.addEventListener('load',()=>{
-        console.log(xhr.response);
-      });
-
-      async function fetchTest() {
-        console.log( 'in funcg')
-        const response = await fetch('http://localhost:8000/save',{
-          method : 'POST',
-          headers : {"Content-Type":"application/json"},
-          body : JSON.stringify(parsedData),
-        })
-        try {
-          if(!response.ok) {
-            res.writeHead(500,{"Content-Type":"application/json"});
-            res.end('Error Server');
-          }
-          let data = await response.json();
-          console.log('success Fetch', data);
+      xhr.onreadystatechange = function() {
+        if(xhr.readyState === 4) {
           res.writeHead(200,{"Content-Type":"application/json"});
-          res.end(JSON.stringify(data));
-        }
-        catch(err){
-          console.error('This is error', err);
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('Server error');
+          res.end(xhr.responseText);
+        } else {
+          res.writeHead(500,{"Content-Type":"application/json"});
+          res.end(JSON.stringify({error : "Server error"}));
         }
       }
-      fetchTest();
+
+      xhr.send(JSON.stringify(parseData));
+
     });
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
