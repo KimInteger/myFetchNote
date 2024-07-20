@@ -7,6 +7,8 @@ const qs = require('querystring')
 const PORT = 3000;
 
 const server = http.createServer((req, res) => {
+  console.log(req.method);
+  console.log(req.url);
   if (req.method === 'GET' && req.url === '/') {
     fs.readFile('./index.html', (err, data) => {
       if (err) {
@@ -22,45 +24,29 @@ const server = http.createServer((req, res) => {
     req.on('data', (chunk) => {
       body += chunk.toString();
     });
-    req.on('end', () => {
-      console.log('Received data:', body);
-
-      let parsedData;
+    req.on('end', async () => {
+      const parsedData = qs.parse(body);
       try {
-        parsedData = qs.parse(body);
-        console.log(parsedData);
-        console.log(JSON.stringify(parsedData));
-      } catch (err) {
-        console.error('Invalid JSON received:', err);
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('Bad Request');
-        return;
-      }
+        const response = await fetch('http://localhost:8000/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsedData),
+        });
 
-      async function fetchTest() {
-        console.log( 'in func')
-        const response = await fetch('http://localhost:8000/save',{
-          method : 'POST',
-          headers : {"Content-Type":"application/json"},
-          body : JSON.stringify(parsedData),
-        })
-        try {
-          if(!response.ok) {
-            res.writeHead(500,{"Content-Type":"application/json"});
-            res.end('Error Server');
-          }
-          let data = await response.json();
-          console.log('success Fetch', data);
-          res.writeHead(200,{"Content-Type":"application/json"});
-          res.end(JSON.stringify(data));
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
-        catch(err){
-          console.error('This is error', err);
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('Server error');
-        }
-      }
-      fetchTest();
+
+        const data = await response.json();
+        console.log(data);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (error) {
+        console.error('Fetch error:', error);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      }    
     });
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
