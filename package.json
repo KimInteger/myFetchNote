@@ -10,6 +10,7 @@
   "description": "",
   "dependencies": {
     "node-fetch": "^3.3.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "xhr2": "^0.2.1"
   }
 }

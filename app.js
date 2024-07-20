@@ -6,6 +6,8 @@ const qs = require('querystring')
 
 const PORT = 3000;
 
+const xhr = require('xhr2');
+
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/') {
     fs.readFile('./index.html', (err, data) => {
@@ -37,8 +39,18 @@ const server = http.createServer((req, res) => {
         return;
       }
 
+      const xhr = new XMLHttpRequest();
+      xhr.open('http://localhost:8000/save','POST',true);
+      xhr.status(200);
+      xhr.setRequestHeader({"Content-Type":"application/json"});
+      xhr.send(JSON.stringify(parsedData));
+
+      xhr.addEventListener('load',()=>{
+        console.log(xhr.response);
+      });
+
       async function fetchTest() {
-        console.log( 'in func')
+        console.log( 'in funcg')
         const response = await fetch('http://localhost:8000/save',{
           method : 'POST',
           headers : {"Content-Type":"application/json"},
